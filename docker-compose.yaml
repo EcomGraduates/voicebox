@@ -1,64 +1,26 @@
-version: "3.9"
-
 services:
-  voicebox-api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: voicebox-api
+  backend:
+    build: .
+    ports:
+      - "17493:17493"
+    volumes:
+      - voicebox-data:/app/data
+      - huggingface-cache:/root/.cache/huggingface
     restart: unless-stopped
-    
-    # GPU Configuration - requires NVIDIA Container Toolkit
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:17493/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: all # Use 'all' for all GPUs, or specific count
+              count: all
               capabilities: [gpu]
-    
-    ports:
-      - "17493:17493"
-    
-    volumes:
-      # Persist HuggingFace models (large downloads, ~4GB+)
-      - voicebox-models:/app/models
-      
-      # Persist SQLite database and generated audio
-      - voicebox-data:/app/data
-      
-      # Optional: Mount local audio files for voice profiles
-      # - ./audio:/app/audio
-    
-    environment:
-      # GPU settings
-      - NVIDIA_VISIBLE_DEVICES=all
-      - CUDA_VISIBLE_DEVICES=0
-      
-      # HuggingFace cache location
-      - HF_HOME=/app/models
-      - TRANSFORMERS_CACHE=/app/models
-      - TORCH_HOME=/app/models
-      - HOST=0.0.0.0
-      # Optional: HuggingFace token for gated models
-      # - HF_TOKEN=your_token_here
-      
-      # Server settings
-      - VOICEBOX_HOST=0.0.0.0
-      - VOICEBOX_PORT=17493
-    
-    # Enable GPU passthrough (alternative method for older compose versions)
-    # runtime: nvidia
-    
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:17493/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s  # Allow time for model loading
 
 volumes:
-  voicebox-models:
-    name: voicebox-models
   voicebox-data:
-    name: voicebox-data
+  huggingface-cache:
