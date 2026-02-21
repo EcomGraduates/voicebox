@@ -14,7 +14,7 @@ services:
         reservations:
           devices:
             - driver: nvidia
-              count: 1  # Use 'all' for all GPUs, or specific count
+              count: all # Use 'all' for all GPUs, or specific count
               capabilities: [gpu]
     
     ports:
@@ -39,7 +39,7 @@ services:
       - HF_HOME=/app/models
       - TRANSFORMERS_CACHE=/app/models
       - TORCH_HOME=/app/models
-      
+      - HOST=0.0.0.0
       # Optional: HuggingFace token for gated models
       # - HF_TOKEN=your_token_here
       
